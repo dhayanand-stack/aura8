@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { generateAuraDates } from '../utils/auraCalculation';
 import DatePicker from '../components/DatePicker';
@@ -53,13 +53,25 @@ const Index = () => {
   const handleAddFolder = () => setShowFolderInput(true);
 
   const handleFolderSave = async (e) => {
-    e.preventDefault(); // Prevent form submission
+    e.preventDefault();
     if (folderName.trim()) {
       try {
         if (editingFolder) {
-          await updateDoc(doc(db, 'folders', editingFolder.id), {
-            name: folderName.trim()
-          });
+          // Check if the document still exists before updating
+          const docRef = doc(db, 'folders', editingFolder.id);
+          const docSnap = await getDoc(docRef);
+          
+          if (docSnap.exists()) {
+            await updateDoc(docRef, {
+              name: folderName.trim()
+            });
+          } else {
+            // If document doesn't exist, create a new one
+            await addDoc(collection(db, 'folders'), {
+              name: folderName.trim(),
+              createdAt: new Date().toISOString()
+            });
+          }
           setEditingFolder(null);
         } else {
           await addDoc(collection(db, 'folders'), {
