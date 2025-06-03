@@ -58,7 +58,6 @@ const Index = () => {
     if (folderName.trim()) {
       try {
         if (editingFolder) {
-          // Check if the folder still exists before updating
           const folderRef = doc(db, 'folders', editingFolder.id);
           const folderDoc = await getDoc(folderRef);
           
@@ -98,13 +97,46 @@ const Index = () => {
   };
 
   const handleDeleteFolder = async (folderId, e) => {
+    e.preventDefault();
     e.stopPropagation();
-    if (window.confirm('Are you sure you want to delete this folder?')) {
-      try {
-        await deleteDoc(doc(db, 'folders', folderId));
-      } catch (error) {
-        console.error('Error deleting folder:', error);
+    
+    try {
+      // First check if the folder exists
+      const folderRef = doc(db, 'folders', folderId);
+      const folderDoc = await getDoc(folderRef);
+      
+      if (!folderDoc.exists()) {
+        toast({
+          title: "Error",
+          description: "This folder no longer exists.",
+          variant: "destructive"
+        });
+        return;
       }
+
+      // Show confirmation dialog
+      if (window.confirm('Are you sure you want to delete this folder?')) {
+        await deleteDoc(folderRef);
+        
+        // Also delete all tasks in the folder
+        const folderTasksRef = collection(db, `folder-${folderId}`);
+        const folderTasksSnapshot = await getDocs(folderTasksRef);
+        
+        const deletePromises = folderTasksSnapshot.docs.map(doc => deleteDoc(doc.ref));
+        await Promise.all(deletePromises);
+
+        toast({
+          title: "Success",
+          description: "Folder deleted successfully",
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting folder:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete folder. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -140,10 +172,15 @@ const Index = () => {
   };
 
   const handleEditFolder = (folder, e) => {
+    e.preventDefault();
     e.stopPropagation();
     setEditingFolder(folder);
     setFolderName(folder.name);
     setShowFolderInput(true);
+  };
+
+  const handleFolderClick = (folderId) => {
+    navigate(`/folder/${folderId}`);
   };
 
   return (
@@ -272,7 +309,7 @@ const Index = () => {
                   <Card 
                     key={folder.id}
                     className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-all duration-300 cursor-pointer group hover:shadow-xl hover:shadow-purple-500/10 backdrop-blur-sm"
-                    onClick={() => navigate(`/folder/${folder.id}`)}
+                    onClick={() => handleFolderClick(folder.id)}
                   >
                     <CardContent className="p-6 relative">
                       <div className="flex items-center space-x-3">
