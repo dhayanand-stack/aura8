@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, getDoc, getDocs } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { generateAuraDates } from '../utils/auraCalculation';
 import DatePicker from '../components/DatePicker';
