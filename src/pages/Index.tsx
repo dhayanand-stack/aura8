@@ -57,8 +57,19 @@ const Index = () => {
     if (folderName.trim()) {
       try {
         if (editingFolder) {
-          const docRef = doc(db, 'folders', editingFolder.id);
-          await updateDoc(docRef, {
+          // Check if the folder still exists before updating
+          const folderRef = doc(db, 'folders', editingFolder.id);
+          const folderDoc = await getDoc(folderRef);
+          
+          if (!folderDoc.exists()) {
+            alert('This folder no longer exists. It may have been deleted.');
+            setFolderName('');
+            setShowFolderInput(false);
+            setEditingFolder(null);
+            return;
+          }
+          
+          await updateDoc(folderRef, {
             name: folderName.trim()
           });
         } else {
@@ -72,6 +83,7 @@ const Index = () => {
         setEditingFolder(null);
       } catch (error) {
         console.error('Error saving folder:', error);
+        alert('Failed to save folder. Please try again.');
       }
     }
   };
