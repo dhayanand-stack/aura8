@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, getDoc, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { generateAuraDates } from '../utils/auraCalculation';
 import DatePicker from '../components/DatePicker';
@@ -57,18 +57,7 @@ const Index = () => {
     if (folderName.trim()) {
       try {
         if (editingFolder) {
-          // Check if the folder still exists before updating
           const folderRef = doc(db, 'folders', editingFolder.id);
-          const folderDoc = await getDoc(folderRef);
-          
-          if (!folderDoc.exists()) {
-            alert('The folder you were trying to edit no longer exists.');
-            setFolderName('');
-            setShowFolderInput(false);
-            setEditingFolder(null);
-            return;
-          }
-          
           await updateDoc(folderRef, {
             name: folderName.trim()
           });
@@ -128,6 +117,13 @@ const Index = () => {
       top: document.documentElement.scrollHeight,
       behavior: 'smooth'
     });
+  };
+
+  const handleEditFolder = (folder, e) => {
+    e.stopPropagation();
+    setEditingFolder(folder);
+    setFolderName(folder.name);
+    setShowFolderInput(true);
   };
 
   return (
@@ -273,12 +269,7 @@ const Index = () => {
                       
                       <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditingFolder(folder);
-                            setFolderName(folder.name);
-                            setShowFolderInput(true);
-                          }}
+                          onClick={(e) => handleEditFolder(folder, e)}
                           variant="ghost"
                           size="sm"
                           className="text-slate-400 hover:text-white"
