@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { generateAuraDates } from '../utils/auraCalculation';
 import DatePicker from '../components/DatePicker';
@@ -9,6 +9,7 @@ import { Plus, FolderPlus, Layout, Folder, CheckSquare, ArrowDown, Trash2 } from
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
+import { toast } from '../hooks/use-toast';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -57,7 +58,22 @@ const Index = () => {
     if (folderName.trim()) {
       try {
         if (editingFolder) {
+          // Check if the folder still exists before updating
           const folderRef = doc(db, 'folders', editingFolder.id);
+          const folderDoc = await getDoc(folderRef);
+          
+          if (!folderDoc.exists()) {
+            toast({
+              title: "Error",
+              description: "This folder no longer exists. It may have been deleted.",
+              variant: "destructive"
+            });
+            setFolderName('');
+            setShowFolderInput(false);
+            setEditingFolder(null);
+            return;
+          }
+
           await updateDoc(folderRef, {
             name: folderName.trim()
           });
@@ -72,7 +88,11 @@ const Index = () => {
         setEditingFolder(null);
       } catch (error) {
         console.error('Error saving folder:', error);
-        alert('Failed to save folder. Please try again.');
+        toast({
+          title: "Error",
+          description: "Failed to save folder. Please try again.",
+          variant: "destructive"
+        });
       }
     }
   };
