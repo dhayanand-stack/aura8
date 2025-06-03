@@ -5,7 +5,7 @@ import { db } from '../config/firebase';
 import { generateAuraDates } from '../utils/auraCalculation';
 import DatePicker from '../components/DatePicker';
 import TaskItem from '../components/TaskItem';
-import { Plus, FolderPlus, Layout, Folder, CheckSquare } from 'lucide-react';
+import { Plus, FolderPlus, Layout, Folder, CheckSquare, ArrowDown } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
@@ -52,7 +52,8 @@ const Index = () => {
   const handleAddTask = () => setShowDatePicker(true);
   const handleAddFolder = () => setShowFolderInput(true);
 
-  const handleFolderSave = async () => {
+  const handleFolderSave = async (e) => {
+    e.preventDefault(); // Prevent form submission
     if (folderName.trim()) {
       try {
         if (editingFolder) {
@@ -96,6 +97,13 @@ const Index = () => {
     } catch (error) {
       console.error('Error adding task:', error);
     }
+  };
+
+  const scrollToBottom = () => {
+    window.scrollTo({
+      top: document.documentElement.scrollHeight,
+      behavior: 'smooth'
+    });
   };
 
   return (
@@ -285,6 +293,15 @@ const Index = () => {
           )}
         </div>
 
+        {/* Scroll to Bottom Button */}
+        <Button
+          onClick={scrollToBottom}
+          className="fixed bottom-8 right-8 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 w-12 h-12 flex items-center justify-center"
+          size="icon"
+        >
+          <ArrowDown className="w-5 h-5" />
+        </Button>
+
         {/* Modals */}
         {showDatePicker && (
           <DatePicker
@@ -303,33 +320,36 @@ const Index = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <input
-                  type="text"
-                  value={folderName}
-                  onChange={(e) => setFolderName(e.target.value)}
-                  placeholder="Enter folder name..."
-                  className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
-                  autoFocus
-                />
-                <div className="flex justify-end gap-3">
-                  <Button
-                    onClick={() => {
-                      setShowFolderInput(false);
-                      setEditingFolder(null);
-                      setFolderName('');
-                    }}
-                    variant="outline"
-                    className="border-slate-600 text-slate-300 hover:bg-slate-700"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={handleFolderSave}
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                  >
-                    {editingFolder ? 'Save Changes' : 'Create Folder'}
-                  </Button>
-                </div>
+                <form onSubmit={handleFolderSave}>
+                  <input
+                    type="text"
+                    value={folderName}
+                    onChange={(e) => setFolderName(e.target.value)}
+                    placeholder="Enter folder name..."
+                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                    autoFocus
+                  />
+                  <div className="flex justify-end gap-3 mt-4">
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        setShowFolderInput(false);
+                        setEditingFolder(null);
+                        setFolderName('');
+                      }}
+                      variant="outline"
+                      className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                    >
+                      {editingFolder ? 'Save Changes' : 'Create Folder'}
+                    </Button>
+                  </div>
+                </form>
               </CardContent>
             </Card>
           </div>
