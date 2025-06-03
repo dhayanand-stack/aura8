@@ -57,7 +57,18 @@ const Index = () => {
     if (folderName.trim()) {
       try {
         if (editingFolder) {
+          // Check if the folder still exists before updating
           const folderRef = doc(db, 'folders', editingFolder.id);
+          const folderDoc = await getDoc(folderRef);
+          
+          if (!folderDoc.exists()) {
+            alert('The folder you were trying to edit no longer exists.');
+            setFolderName('');
+            setShowFolderInput(false);
+            setEditingFolder(null);
+            return;
+          }
+          
           await updateDoc(folderRef, {
             name: folderName.trim()
           });
