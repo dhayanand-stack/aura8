@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, getDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { generateAuraDates } from '../utils/auraCalculation';
 import DatePicker from '../components/DatePicker';
 import TaskItem from '../components/TaskItem';
-import { Plus, FolderPlus, Layout, Folder, CheckSquare, ArrowDown } from 'lucide-react';
+import { Plus, FolderPlus, Layout, Folder, CheckSquare, ArrowDown, Trash2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
@@ -57,22 +57,10 @@ const Index = () => {
     if (folderName.trim()) {
       try {
         if (editingFolder) {
-          // Check if the document still exists before updating
           const docRef = doc(db, 'folders', editingFolder.id);
-          const docSnap = await getDoc(docRef);
-          
-          if (docSnap.exists()) {
-            await updateDoc(docRef, {
-              name: folderName.trim()
-            });
-          } else {
-            // If document doesn't exist, create a new one
-            await addDoc(collection(db, 'folders'), {
-              name: folderName.trim(),
-              createdAt: new Date().toISOString()
-            });
-          }
-          setEditingFolder(null);
+          await updateDoc(docRef, {
+            name: folderName.trim()
+          });
         } else {
           await addDoc(collection(db, 'folders'), {
             name: folderName.trim(),
@@ -81,8 +69,20 @@ const Index = () => {
         }
         setFolderName('');
         setShowFolderInput(false);
+        setEditingFolder(null);
       } catch (error) {
         console.error('Error saving folder:', error);
+      }
+    }
+  };
+
+  const handleDeleteFolder = async (folderId, e) => {
+    e.stopPropagation();
+    if (window.confirm('Are you sure you want to delete this folder?')) {
+      try {
+        await deleteDoc(doc(db, 'folders', folderId));
+      } catch (error) {
+        console.error('Error deleting folder:', error);
       }
     }
   };
@@ -259,21 +259,31 @@ const Index = () => {
                         </div>
                       </div>
                       
-                      <Button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEditingFolder(folder);
-                          setFolderName(folder.name);
-                          setShowFolderInput(true);
-                        }}
-                        variant="ghost"
-                        size="sm"
-                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-white"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                        </svg>
-                      </Button>
+                      <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingFolder(folder);
+                            setFolderName(folder.name);
+                            setShowFolderInput(true);
+                          }}
+                          variant="ghost"
+                          size="sm"
+                          className="text-slate-400 hover:text-white"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                          </svg>
+                        </Button>
+                        <Button
+                          onClick={(e) => handleDeleteFolder(folder.id, e)}
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
                 ))}
